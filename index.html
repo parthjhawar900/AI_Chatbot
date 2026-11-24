@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Maester’s Raven</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500&display=swap">
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--stone:#121416;--iron:#1c2024;--steel:#2b3138;--frost:#cfd8e3;--gold:#c9a24b;--ember:#d2551f;--text:#e6e9ee;--muted:#9aa4b2}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{height:100%;margin:0;background:#121416 radial-gradient(ellipse at 50% 0%,#2a1a12 0%,#121416 55%);color:var(--text);font-family:Inter,Arial,sans-serif;display:flex;flex-direction:column}
+header{padding:20px 24px;text-align:center;border-bottom:2px solid var(--gold);background:var(--iron)}
+h1{margin:0;font-family:Cinzel,Georgia,serif;font-size:clamp(22px,4vw,34px);letter-spacing:4px;color:var(--gold)}
+header p{margin:6px 0 0;color:var(--muted);font-size:13px;letter-spacing:2px;text-transform:uppercase}
+#log{flex:1;overflow-y:auto;padding:24px 16px;max-width:860px;width:100%;margin:0 auto}
+.msg{margin:0 0 18px;padding:14px 18px;border:1px solid var(--steel);background:var(--iron);line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.user{border-left:4px solid var(--ember);margin-left:8%}
+.msg.bot{border-left:4px solid var(--frost);margin-right:8%}
+.who{font-family:Cinzel,Georgia,serif;font-size:12px;letter-spacing:3px;margin-bottom:6px;color:var(--gold);text-transform:uppercase}
+.code{position:relative;margin:12px 0;background:#0a0b0c;border:1px solid var(--steel);white-space:normal}
+.code pre{margin:0;padding:16px;overflow-x:auto;white-space:pre;font:13px/1.5 ui-monospace,Consolas,monospace;color:#f0e6d0}
+.code button{position:absolute;top:6px;right:6px;background:var(--steel);color:var(--text);border:1px solid var(--gold);padding:6px 12px;cursor:pointer;font-size:12px;min-height:44px}
+.code button:hover{background:var(--gold);color:#111}
+form{display:flex;gap:10px;padding:16px;max-width:860px;width:100%;margin:0 auto}
+textarea{flex:1;resize:none;background:var(--iron);color:var(--text);border:1px solid var(--steel);padding:14px;font:15px Inter,Arial,sans-serif;min-height:52px}
+textarea:focus{outline:2px solid var(--gold)}
+#send{background:var(--gold);color:#111;border:0;padding:0 28px;font-family:Cinzel,Georgia,serif;font-weight:700;letter-spacing:2px;cursor:pointer;min-height:52px}
+#send:disabled{opacity:.5;cursor:wait}
+#app{display:flex;flex-direction:column;flex:1;min-height:0}
+#gate{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 30%,#3a1a0e 0%,#121416 65%);transition:opacity .7s ease}
+#gate.out{opacity:0;pointer-events:none}
+#snow{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#torch{position:absolute;inset:0;z-index:1;pointer-events:none;--x:50%;--y:40%;background:radial-gradient(circle 240px at var(--x) var(--y),rgba(210,85,31,.30),transparent 70%)}
+#wall{position:absolute;left:0;bottom:0;width:100%;height:120px;z-index:1;pointer-events:none}
+.flame{position:absolute;bottom:70px;width:26px;height:46px;z-index:1;border-radius:50% 50% 40% 40%;background:radial-gradient(ellipse at 50% 70%,#ffd37a 0%,#d2551f 55%,transparent 75%);filter:blur(1px) drop-shadow(0 0 22px #d2551f);animation:flicker 1.3s ease-in-out infinite;pointer-events:none}
+.flame:nth-of-type(2){animation-delay:-.6s}
+@keyframes flicker{0%,100%{transform:scale(1,1);opacity:.95}30%{transform:scale(.9,1.12);opacity:.8}60%{transform:scale(1.08,.94);opacity:1}}
+#gate>h2,#gate>p,#gate>#lock,#gate>#dials,#gate>#try,#gate>#hint{position:relative;z-index:2}
+#raven{position:absolute;top:clamp(16px,6vh,60px);right:clamp(16px,8vw,120px);width:96px;height:96px;padding:0;background:none;border:2px solid transparent;border-radius:12px;cursor:pointer;z-index:3;animation:bob 3.2s ease-in-out infinite}
+#raven:hover,#raven:focus-visible{outline:none;border-color:var(--gold)}
+#raven svg{width:100%;height:100%;display:block}
+#wing{transform-origin:30px 46px}
+#raven.flap #wing{animation:flap .45s 3}
+@keyframes flap{50%{transform:rotate(-45deg)}}
+@keyframes bob{50%{transform:translateY(-6px)}}
+#whisper{position:absolute;top:clamp(120px,18vh,170px);right:clamp(16px,8vw,120px);max-width:240px;z-index:3;padding:10px 14px;background:rgba(18,20,22,.85);border:1px solid var(--steel);border-left:3px solid var(--gold);color:var(--frost);font-size:14px;line-height:1.5;text-align:left}
+@media (max-width:640px){#raven{width:72px;height:72px}#whisper{top:100px;max-width:180px;font-size:13px}}
+#gate h2{margin:0;font-family:Cinzel,Georgia,serif;font-size:clamp(26px,6vw,48px);letter-spacing:6px;color:var(--gold)}
+#gate p{margin:0;max-width:420px;color:var(--muted);line-height:1.6}
+#lock{background:none;border:2px solid transparent;border-radius:12px;padding:16px;cursor:pointer;min-width:44px;min-height:44px}
+#lock:hover,#lock:focus-visible{outline:none;border-color:var(--gold);filter:drop-shadow(0 0 18px #d2551f)}
+#lock svg{width:clamp(140px,30vw,200px);height:auto;display:block}
+#shackle{transition:transform .6s cubic-bezier(.3,1.4,.5,1);transform-origin:70px 90px}
+#lock.open #shackle{transform:translateY(-22px) rotate(-28deg)}
+#lock.open .keyhole{fill:#d2551f}
+#hint{font-family:Cinzel,Georgia,serif;letter-spacing:4px;font-size:13px;color:var(--gold);text-transform:uppercase}
+.riddle{font-size:17px;color:var(--frost)}
+#dials{display:flex;gap:16px}
+.dial{display:flex;flex-direction:column;align-items:center;gap:8px}
+.dial button{width:64px;min-height:44px;background:var(--steel);color:var(--gold);border:1px solid var(--gold);cursor:pointer;font-size:16px}
+.dial button:hover{background:var(--gold);color:#111}
+.digit{width:64px;height:72px;display:flex;align-items:center;justify-content:center;background:#0a0b0c;border:2px solid var(--gold);font:700 34px Cinzel,Georgia,serif;color:var(--text)}
+#try{background:var(--gold);color:#111;border:0;padding:0 32px;min-height:48px;font-family:Cinzel,Georgia,serif;font-weight:700;letter-spacing:3px;cursor:pointer}
+#try:disabled{opacity:.5;cursor:default}
+#gate.shake #lock,#gate.shake #dials{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+@media (prefers-reduced-motion:reduce){#gate,#shackle{transition:none}#gate.shake #lock,#gate.shake #dials{animation:none}}
+#tts,#amb,#mic{background:var(--steel);color:var(--gold);border:1px solid var(--gold);padding:0 16px;min-height:44px;font-family:Cinzel,Georgia,serif;letter-spacing:2px;cursor:pointer}
+#tts,#amb{margin:10px 6px 0;font-size:12px}
+#tts[aria-pressed=true],#amb[aria-pressed=true],#mic.on{background:var(--gold);color:#111}
+header{background:linear-gradient(180deg,#262d35,#1a1e23);box-shadow:0 6px 30px rgba(0,0,0,.6);position:relative;z-index:1}
+header::after{content:"";position:absolute;left:50%;bottom:-7px;width:12px;height:12px;background:var(--gold);transform:translateX(-50%) rotate(45deg)}
+h1{text-shadow:0 0 18px rgba(210,85,31,.55)}
+body::before{content:"";position:fixed;left:0;right:0;bottom:0;height:34vh;background:linear-gradient(0deg,rgba(210,85,31,.2),transparent);pointer-events:none}
+.msg{box-shadow:0 4px 18px rgba(0,0,0,.45);animation:rise .4s ease both}
+.msg.user{background:linear-gradient(135deg,#2c1a13,#1c2024)}
+.msg.bot{background:linear-gradient(135deg,#232b34,#1c2024)}
+.who::before{content:"◆ ";color:var(--ember)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+#log::-webkit-scrollbar{width:8px}
+#log::-webkit-scrollbar-thumb{background:var(--steel);border-radius:4px}
+textarea{box-shadow:inset 0 0 12px rgba(0,0,0,.6)}
+#send:hover:not(:disabled){box-shadow:0 0 18px rgba(201,162,75,.6)}
+@media (prefers-reduced-motion:reduce){.msg{animation:none}}
+#riddle{white-space:pre-line}
+#newr{position:relative;z-index:2;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;min-height:44px;padding:0 12px}
+#newr:hover{color:var(--gold)}
+</style>
+</head>
+<body>
+<div id="gate">
+<canvas id="snow" aria-hidden="true"></canvas>
+<div id="torch" aria-hidden="true"></div>
+<svg id="wall" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120 V60 L60 48 L120 62 L190 40 L260 58 L330 36 L410 56 L480 38 L560 60 L640 42 L720 58 L800 36 L880 56 L960 40 L1040 60 L1120 44 L1200 58 V120 Z" fill="#1a2027"/><path d="M0 62 L60 50 L120 64 L190 42 L260 60 L330 38 L410 58 L480 40 L560 62 L640 44 L720 60 L800 38 L880 58 L960 42 L1040 62 L1120 46 L1200 60" fill="none" stroke="#cfd8e3" stroke-opacity=".5" stroke-width="3"/></svg>
+<div class="flame" style="left:7%"></div><div class="flame" style="right:7%"></div>
+<button id="raven" type="button" aria-label="Listen to the raven"><svg viewBox="0 0 80 80" aria-hidden="true"><path d="M14 52 C14 36 30 28 46 32 C58 34 66 42 66 52 C66 60 58 64 50 62 L36 70 L38 60 C24 62 14 60 14 52 Z" fill="#0b0c0e" stroke="#4a535e" stroke-width="1.5"/><circle cx="52" cy="30" r="9" fill="#0b0c0e" stroke="#4a535e" stroke-width="1.5"/><path d="M60 29 L74 33 L60 35 Z" fill="#c9a24b"/><circle cx="55" cy="28" r="1.8" fill="#d2551f"/><path id="wing" d="M26 44 C34 36 46 38 52 46 C44 52 32 52 26 44 Z" fill="#1b2027" stroke="#4a535e" stroke-width="1"/></svg></button>
+<div id="whisper" aria-live="polite">Click the raven to hear a whisper.</div>
+<h2>THE MAESTER’S LIBRARY</h2>
+<p class="riddle" id="riddle"></p>
+<div id="lock">
+<svg viewBox="0 0 200 200" aria-hidden="true">
+<path id="shackle" d="M68 92 V64 a32 32 0 0 1 64 0 V92" fill="none" stroke="#9aa4b2" stroke-width="14" stroke-linecap="round"/>
+<rect x="44" y="92" width="112" height="92" rx="12" fill="#c9a24b"/>
+<rect x="44" y="92" width="112" height="14" rx="7" fill="#e0bd6a"/>
+<circle class="keyhole" cx="100" cy="132" r="11" fill="#121416"/>
+<rect class="keyhole" x="96" y="136" width="8" height="26" rx="3" fill="#121416"/>
+</svg>
+</div>
+<div id="dials">
+<div class="dial"><button type="button" data-i="0" data-d="1" aria-label="Raise first dial">▲</button><div class="digit" id="d0" aria-live="polite">0</div><button type="button" data-i="0" data-d="-1" aria-label="Lower first dial">▼</button></div>
+<div class="dial"><button type="button" data-i="1" data-d="1" aria-label="Raise second dial">▲</button><div class="digit" id="d1" aria-live="polite">0</div><button type="button" data-i="1" data-d="-1" aria-label="Lower second dial">▼</button></div>
+<div class="dial"><button type="button" data-i="2" data-d="1" aria-label="Raise third dial">▲</button><div class="digit" id="d2" aria-live="polite">0</div><button type="button" data-i="2" data-d="-1" aria-label="Lower third dial">▼</button></div>
+</div>
+<button id="try" type="button">Try the lock</button>
+<button id="newr" type="button">New riddle</button>
+<div id="hint" aria-live="polite">The lock is sealed</div>
+</div>
+<div id="app" inert>
+<header><h1>THE MAESTER’S RAVEN</h1><p>Send a raven. Receive wisdom.</p><button id="tts" type="button" aria-pressed="false">Voice: off</button><button id="amb" type="button" aria-pressed="false">Ambience: off</button></header>
+<main id="log" aria-live="polite"></main>
+<form id="f">
+<label for="q" style="position:absolute;left:-9999px">Your message</label>
+<textarea id="q" rows="1" placeholder="Ask the Maester anything…"></textarea>
+<button id="mic" type="button" hidden>MIC</button>
+<button id="send" type="submit">SEND</button>
+</form>
+</div>
+<script>
+const log = document.getElementById('log'), f = document.getElementById('f'),
+      q = document.getElementById('q'), send = document.getElementById('send');
+const convo = [];
+const SYSTEM = 'You are the Maester of a coding library. Answer directly in one to three short sentences: answer first, no preamble, no follow-up offers, and no questions unless truly needed. Give code only when asked, in one fenced block with a language tag and no extra explanation. Never use markdown asterisks or headers. Conversation so far follows.';
+let sample = null;
+const gate = document.getElementById('gate'), lock = document.getElementById('lock'), app = document.getElementById('app');
+let CODE = [0, 0, 0];
+const dial = [0, 0, 0], hint = document.getElementById('hint'), tryBtn = document.getElementById('try'), ORD = ['first', 'second', 'third'];
+function newRiddle() {
+  const x = [0, 0, 0].map(() => Math.floor(Math.random() * 10)), S = x[0] + x[1] + x[2], pool = [];
+  pool.push({ t: 'Together the three digits sum to ' + S + '.', f: v => v[0] + v[1] + v[2] === S });
+  [[0, 2], [0, 1], [1, 2]].forEach(([i, j]) => { const s = x[i] + x[j]; pool.push({ t: 'The ' + ORD[i] + ' and ' + ORD[j] + ' add up to ' + s + '.', f: v => v[i] + v[j] === s }); });
+  for (let i = 0; i < 3; i++) {
+    const odd = x[i] % 2, n = Math.max(0, x[i] - 1 - Math.floor(Math.random() * 3));
+    pool.push({ t: 'The ' + ORD[i] + ' is ' + (odd ? 'odd' : 'even') + '.', f: v => v[i] % 2 === odd });
+    if (x[i] > n) pool.push({ t: 'The ' + ORD[i] + ' is greater than ' + n + '.', f: v => v[i] > n });
+    if (x[i] > 0 && x[i] % 3 === 0) pool.push({ t: 'The ' + ORD[i] + ' is a multiple of three.', f: v => v[i] > 0 && v[i] % 3 === 0 });
+    for (let j = 0; j < 3; j++) {
+      if (i === j) continue; const d = x[i] - x[j];
+      if (d > 0) { pool.push({ t: 'The ' + ORD[i] + ' is larger than the ' + ORD[j] + '.', f: v => v[i] > v[j] }); pool.push({ t: 'The ' + ORD[i] + ' exceeds the ' + ORD[j] + ' by ' + d + '.', f: v => v[i] - v[j] === d }); }
+      if (x[j] > 0 && x[i] === 2 * x[j]) pool.push({ t: 'The ' + ORD[i] + ' is double the ' + ORD[j] + '.', f: v => v[i] === 2 * v[j] });
+    }
+  }
+  pool.sort(() => Math.random() - .5);
+  let cands = []; for (let k = 0; k < 1000; k++) cands.push([Math.floor(k / 100), Math.floor(k / 10) % 10, k % 10]);
+  const clues = [];
+  for (const p of pool) {
+    if (cands.length === 1 || clues.length >= 4) break;
+    const nc = cands.filter(p.f); if (nc.length < cands.length) { clues.push(p.t); cands = nc; }
+  }
+  for (let i = 0; i < 3 && cands.length > 1; i++) { if (cands.some(v => v[i] !== x[i])) { clues.push('The ' + ORD[i] + ' is ' + x[i] + '.'); cands = cands.filter(v => v[i] === x[i]); } }
+  CODE = x; dial.fill(0); for (let i = 0; i < 3; i++) document.getElementById('d' + i).textContent = 0;
+  document.getElementById('riddle').textContent = 'Three dials guard the gate. Solve the riddle to open it.\n\n' + clues.join('\n');
+  hint.textContent = 'The lock is sealed';
+}
+newRiddle();
+document.getElementById('newr').addEventListener('click', () => { newRiddle(); tries = 0; });
+let tries = 0;
+const torch = document.getElementById('torch'), whisperEl = document.getElementById('whisper'), raven = document.getElementById('raven');
+gate.addEventListener('pointermove', e => { torch.style.setProperty('--x', e.clientX + 'px'); torch.style.setProperty('--y', e.clientY + 'px'); });
+const WHISPERS = ['The ravens say: read every clue twice.', 'Winter punishes the hasty hand. Read the riddle twice.', 'The fire keeps the dark at bay, but only for a while.', 'Count the clues, not the days. Only one code fits all three.', 'Every riddle has exactly one answer.'];
+let wi = 0;
+raven.addEventListener('click', () => {
+  raven.classList.remove('flap'); void raven.offsetWidth; raven.classList.add('flap');
+  whisperEl.textContent = WHISPERS[wi++ % WHISPERS.length];
+});
+(function snow() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c = document.getElementById('snow'), x = c.getContext('2d'); let w, h;
+  const fit = () => { w = c.width = gate.clientWidth; h = c.height = gate.clientHeight; }; fit(); addEventListener('resize', fit);
+  const flakes = Array.from({ length: 110 }, () => ({ x: Math.random() * 2000, y: Math.random() * 1200, r: Math.random() * 2.2 + .6, s: Math.random() * .8 + .3, d: Math.random() * Math.PI * 2 }));
+  (function tick() {
+    if (gate.style.display === 'none') return;
+    x.clearRect(0, 0, w, h); x.fillStyle = 'rgba(230,236,245,.8)';
+    for (const f of flakes) { f.y += f.s; f.d += .01; f.x += Math.sin(f.d) * .4; if (f.y > h) { f.y = -5; f.x = Math.random() * w; } x.beginPath(); x.arc(f.x % w, f.y, f.r, 0, 6.283); x.fill(); }
+    requestAnimationFrame(tick);
+  })();
+})();
+document.querySelectorAll('.dial button').forEach(b => b.addEventListener('click', () => {
+  const i = +b.dataset.i; dial[i] = (dial[i] + +b.dataset.d + 10) % 10;
+  document.getElementById('d' + i).textContent = dial[i];
+}));
+tryBtn.addEventListener('click', () => {
+  if (dial.every((v, i) => v === CODE[i])) {
+    tryBtn.disabled = true; lock.classList.add('open'); hint.textContent = 'The lock opens';
+    setTimeout(() => { gate.classList.add('out'); app.removeAttribute('inert'); setTimeout(() => { gate.style.display = 'none'; q.focus(); }, 720); }, 800);
+    return;
+  }
+  tries++; gate.classList.remove('shake'); void gate.offsetWidth; gate.classList.add('shake');
+  hint.textContent = tries >= 3 ? 'The lock holds. Hint: the ' + ORD[tries % 3] + ' dial is ' + CODE[tries % 3] + '.' : 'The lock holds fast. Think again.';
+});
+claude.use('sample').then(s => { sample = s; });
+let voiceOn = false;
+const tts = document.getElementById('tts'), mic = document.getElementById('mic');
+tts.addEventListener('click', () => {
+  voiceOn = !voiceOn; tts.setAttribute('aria-pressed', voiceOn); tts.textContent = 'Voice: ' + (voiceOn ? 'on' : 'off');
+  if (!voiceOn && window.speechSynthesis) speechSynthesis.cancel();
+});
+function pickVoice() {
+  const vs = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
+  for (const p of [/Google UK English Male/i, /Daniel/i, /Microsoft (Ryan|George|Guy|Mark)/i, /Arthur|Oliver|Fred|Alex/i, /male/i]) { const v = vs.find(v => p.test(v.name)); if (v) return v; }
+  return vs[0] || null;
+}
+function speak(t) {
+  if (!voiceOn || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const clean = t.split('```').filter((_, i) => i % 2 === 0).join(' ').replace(/[*_#`]/g, '').replace(/([.!?])\s+/g, '$1 … ');
+  const u = new SpeechSynthesisUtterance(clean), v = pickVoice();
+  if (v) u.voice = v; u.rate = .82; u.pitch = .55; speechSynthesis.speak(u);
+}
+if (window.speechSynthesis) speechSynthesis.getVoices();
+let ac = null, master = null, ambOn = false;
+const amb = document.getElementById('amb');
+function noiseBuf() { const b = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; }
+function initAmb() {
+  ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0; master.connect(ac.destination);
+  const wind = ac.createBufferSource(); wind.buffer = noiseBuf(); wind.loop = true;
+  const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 280;
+  const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = .6; lg.gain.value = 110; lfo.connect(lg); lg.connect(lp.frequency);
+  const wg = ac.createGain(); wg.gain.value = .7; wind.connect(lp); lp.connect(wg); wg.connect(master); wind.start(); lfo.start();
+  (function crackle() {
+    if (false) {
+      const s = ac.createBufferSource(); s.buffer = noiseBuf(); const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800 + Math.random() * 2500;
+      const g = ac.createGain(), t = ac.currentTime; g.gain.setValueAtTime((Math.random() < .15 ? .9 : .35) * Math.random(), t); g.gain.exponentialRampToValueAtTime(.001, t + .05 + Math.random() * .06);
+      s.connect(hp); hp.connect(g); g.connect(master); s.start(t, Math.random()); s.stop(t + .15);
+    }
+    setTimeout(crackle, 40 + Math.random() * 280);
+  })();
+}
+amb.addEventListener('click', () => {
+  if (!ac) initAmb(); ambOn = !ambOn; ac.resume();
+  master.gain.linearRampToValueAtTime(ambOn ? .3 : 0, ac.currentTime + 1);
+  amb.setAttribute('aria-pressed', ambOn); amb.textContent = 'Ambience: ' + (ambOn ? 'on' : 'off');
+});
+claude.use('dictation').then(d => {
+  if (!d) return; mic.hidden = false; let base = '';
+  d.onPartial(({ text }) => { q.value = base + text; });
+  d.onFinal(({ text }) => { base += text + ' '; q.value = base; });
+  d.onState(({ state }) => { mic.classList.toggle('on', state === 'listening'); mic.textContent = state === 'listening' ? 'STOP' : 'MIC'; });
+  mic.addEventListener('click', () => { if (mic.classList.contains('on')) d.stop(); else { base = q.value ? q.value + ' ' : ''; d.start().catch(() => {}); } });
+});
+
+function render(el, text) {
+  el.textContent = '';
+  text.split('```').forEach((part, i) => {
+    if (i % 2 === 0) { if (part.trim()) el.append(document.createTextNode(part)); return; }
+    const box = document.createElement('div'); box.className = 'code';
+    const pre = document.createElement('pre'); pre.textContent = part.replace(/^[^\n]*\n/, '').replace(/\n$/, '');
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Copy';
+    b.onclick = () => { try { navigator.clipboard.writeText(pre.textContent); b.textContent = 'Copied'; } catch (e) { b.textContent = 'Select and copy'; } setTimeout(() => b.textContent = 'Copy', 1400); };
+    box.append(pre, b); el.append(box);
+  });
+}
+function add(role, text) {
+  const d = document.createElement('div'); d.className = 'msg ' + role;
+  const w = document.createElement('div'); w.className = 'who'; w.textContent = role === 'user' ? 'You' : 'The Maester';
+  const body = document.createElement('div'); d.append(w, body); log.append(d);
+  render(body, text); log.scrollTop = log.scrollHeight; return body;
+}
+f.addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = q.value.trim(); if (!text) return;
+  q.value = ''; add('user', text); convo.push({ role: 'user', content: text });
+  const body = add('bot', 'The raven is in flight…'); send.disabled = true;
+  try {
+    if (!sample) sample = await claude.use('sample');
+    if (!sample) throw { message: 'The raven cannot fly here. Open this page while signed in to Claude.' };
+    const input = convo.map((m, i) => ({ role: m.role, content: (i === 0 ? SYSTEM + '\n\n' : '') + m.content }));
+    const flavor = [];
+    if (Math.random() < 0.4) flavor.push('Write this reply in a playful, archaic Early Modern English voice (thee, thou, hath, doth) while staying just as short and direct.');
+    if (Math.random() < 0.4) flavor.push('Add a few words of witty Westeros lore (winter, ravens, dragons, the Wall) in your own words, no quotes, without making the reply longer.');
+    if (flavor.length) input[input.length - 1].content += '\n\n[Style note, never mention it: ' + flavor.join(' ') + ' Keep all code fully correct and inside code blocks.]';
+    const res = await sample(input, { cache: false, onText: ({ text }) => { render(body, text); log.scrollTop = log.scrollHeight; } });
+    convo.push({ role: 'assistant', content: res.text }); render(body, res.text); speak(res.text);
+  } catch (err) {
+    convo.pop();
+    render(body, err && err.code === 'rate_limited' ? 'Too many ravens at once. Wait a moment and try again.' : err && err.code === 'not_granted' ? 'Permission was declined, so the raven cannot fly.' : 'The raven was lost: ' + ((err && err.message) || 'unknown error'));
+  }
+  send.disabled = false; log.scrollTop = log.scrollHeight; q.focus();
+});
+q.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); f.requestSubmit(); } });
+</script>
+</body>
+</html>
